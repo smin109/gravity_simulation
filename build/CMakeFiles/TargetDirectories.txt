@@ -1,0 +1,4 @@
+/home/seungmin/gravity-sim/gravity_simulation/build/CMakeFiles/nbody_core.dir
+/home/seungmin/gravity-sim/gravity_simulation/build/CMakeFiles/nbody_cli.dir
+/home/seungmin/gravity-sim/gravity_simulation/build/CMakeFiles/edit_cache.dir
+/home/seungmin/gravity-sim/gravity_simulation/build/CMakeFiles/rebuild_cache.dir
