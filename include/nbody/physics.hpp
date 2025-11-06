@@ -11,7 +11,7 @@ struct DirectAccelerator : IAccelerator {
 };
 
 struct VelocityVerlet {
-    void step(simState& S, IAccelerator& acc, const SimParams& P);
+    void step(SimState& S, IAccelerator& acc, const SimParams& P);
 };
 
-void init_disc(simState& S, const SimParams& P, double centralMass = 500.0, double vScale = 0.6);
+void init_disc(SimState& S, const SimParams& P, double centralMass = 500.0, double vScale = 0.6);

@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    simState S;
+    SimState S;
     init_disc(S, P, 500.0, 0.6);
 
     DirectAccelerator acc;
@@ -42,11 +42,11 @@ int main(int argc, char** argv) {
 
     CSVWriter writer(outPath);
     writer.header();
-    writer.dump(S.t, S.boides);
+    writer.dump(S.t, S.bodies);
 
     for (int s{1}; s <= P.steps; s++) {
         integrator.step(S, acc, P);
-        if (s % P.saveEvery == 0) writer.dump(S.t, S.boides);
+        if (s % P.saveEvery == 0) writer.dump(S.t, S.bodies);
     }
 
     std::cerr << "완료 : " << outPath << " 생성\n";
