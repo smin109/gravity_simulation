@@ -14,7 +14,7 @@ struct SimParams {
     uint64_t seed{42};
 };
 
-struct simState {
-    std::vector < Body > boides;
+struct SimState {
+    std::vector<Body> bodies;
     double t{0.0};
 };

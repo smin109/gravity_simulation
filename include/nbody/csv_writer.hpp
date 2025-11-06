@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <string>
 #include "sim.hpp"
 
@@ -8,5 +9,6 @@ struct CSVWriter {
     void header();
     void dump(double t, const std::vector<Body>& B);
 private:
-    struct Impl; Impl* p;
+    struct Impl;
+    std::unique_ptr<Impl> p;
 };

@@ -1,6 +1,8 @@
 #include "nbody/physics.hpp"
 #include <cmath>
 #include <random>
+#include <stdexcept>
+#include <vector>
 
 void DirectAccelerator::compute_acc(std::vector<Body>& B, double G, double soft2) {
     const int N = (int)B.size();
@@ -24,46 +26,65 @@ void DirectAccelerator::compute_acc(std::vector<Body>& B, double G, double soft2
     }
 }
 
-void VelocityVerlet::step(simState& S, IAccelerator & acc, const SimParams& P) {
-    auto& B = S.boides;
+void VelocityVerlet::step(SimState& S, IAccelerator& acc, const SimParams& P) {
+    auto& B = S.bodies;
     const double dt = P.dt;
+    std::vector<Vec2> prevAcc;
+    prevAcc.reserve(B.size());
+
     for (auto& b : B) {
+        prevAcc.push_back(b.a);
         b.x.x += b.v.x * dt + 0.5 * b.a.x * dt * dt;
         b.x.y += b.v.y * dt + 0.5 * b.a.y * dt * dt;
     }
 
     acc.compute_acc(B, P.G, P.soft2);
 
-    for (auto& b : B) {
-        b.v.x += 0.5 * b.a.x * dt;
-        b.v.y += 0.5 * b.a.y * dt;
+    for (std::size_t i = 0; i < B.size(); ++i) {
+        const Vec2 dv = (prevAcc[i] + B[i].a) * (0.5 * dt);
+        B[i].v += dv;
     }
     S.t += dt;
 }
 
-void init_disc(simState& S, const SimParams& P, double centralMass, double vScale) {
-    S.boides.assign(P.N, Body{});
-    std::mt19937_64 rng(P.seed);
-    std::uniform_real_distribution < double > U(-1.0, 1.0);
+void init_disc(SimState& S, const SimParams& P, double centralMass, double vScale) {
+    if (P.N <= 0) {
+        throw std::invalid_argument("SimParams::N must be positive to initialize the disc");
+    }
 
-    S.boides[0].m = centralMass;
-    S.boides[0].x = {0, 0};
-    S.boides[0].v = {0, 0};
-    S.boides[0].a = {0, 0};
+    S.bodies.assign(P.N, Body{});
+    std::mt19937_64 rng(P.seed);
+    const double twoPi = 2.0 * std::acos(-1.0);
+    std::uniform_real_distribution<double> angleDist(0.0, twoPi);
+    std::uniform_real_distribution<double> radiusDist(0.0, 1.0);
+
+    S.bodies[0].m = centralMass;
+    S.bodies[0].x = {0, 0};
+    S.bodies[0].v = {0, 0};
+    S.bodies[0].a = {0, 0};
 
     for (int i{1}; i < P.N; i++) {
-        double rx = U(rng), ry = U(rng);
-        double rnorm = std::sqrt(rx * rx + ry * ry) + 1e-12;
-        rx /= rnorm; ry /= rnorm;
-        double r = P.boxR * std::pow(std::abs(U(rng)), 0.5);
-        S.boides[i].m = 1.0;
-        S.boides[i].x = {rx * r, ry * r};
+        const double theta = angleDist(rng);
+        const double r = P.boxR * std::sqrt(radiusDist(rng));
 
-        double tx = -ry, ty = rx;
-        double vmag = std::sqrt(P.G * centralMass / (r + 1e-9));
-        S.boides[i].v = {rx * (vScale * vmag), ty * (vScale * vmag)};
+        const double rx = std::cos(theta);
+        const double ry = std::sin(theta);
+        const double tx = -ry;
+        const double ty = rx;
+        const double xPos = rx * r;
+        const double yPos = ry * r;
+
+        S.bodies[i].m = 1.0;
+        S.bodies[i].x = {xPos, yPos};
+
+        double vmag = 0.0;
+        if (r > 0.0) {
+            vmag = std::sqrt(P.G * centralMass / r);
+        }
+        const double speed = vScale * vmag;
+        S.bodies[i].v = {tx * speed, ty * speed};
     }
 
     DirectAccelerator acc;
-    acc.compute_acc(S.boides, P.G, P.soft2);
+    acc.compute_acc(S.bodies, P.G, P.soft2);
 }
